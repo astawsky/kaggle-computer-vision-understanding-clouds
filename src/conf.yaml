@@ -1,0 +1,21 @@
+data_processing:
+  random_state: 42
+  batch_size: 64
+  raw_image_height: 1400
+  raw_image_width: 2100
+  train_csv_dtype_map:
+    Image_Label: string
+    EncodedPixels: object
+    Image: string
+    Label: string
+    Label_index: int
+  label_mapping:
+    Fish: 0
+    Flower: 1
+    Gravel: 2
+    Sugar: 3
+  skf_n_splits: 15
+  skf_shuffle: False
+
+
+

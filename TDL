@@ -1,0 +1,18 @@
+To do list:
+
+- Download segmentation models, open cv, and alubmentations libraries
+- Create function that converts masks into Greyscale images
+- Train-test split
+- 
+- Data augmentation (optional but highly recommended)
+- create a pipeline that 
+
+
+Development flow:
+
+- run import_data.sh to download raw kaggle dataset
+- start preprocessing
+    - Read CSV and change dtypes of columns
+    - Generate Greyscale masks of labels with the same size as the original image
+
+
