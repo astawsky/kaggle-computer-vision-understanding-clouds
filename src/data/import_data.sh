@@ -1,6 +1,18 @@
 #!/bin/bash
 
-export KCVUC_RAW_DATA="./data/raw"
+# Point to where all the environmental variables are
+source .env
+
+# Let's check if the original zip file or its extracted files exist already
+if [ -e $KCVUC_RAW_DATA/$KCVUC_RAW_ZIP_FILE ] || [ -e $KCVUC_TRAIN_CSV ]; then
+    echo "File exists."
+    # Stop the rest of the script from running or perform other actions
+    exit 1
+fi
+
+# Continue with the rest of the script
+echo "Continuing with the script..."
+
 
 # First we must go to Kaggle and create an API token that will download the "kaggle.json" which contains our API credentials.
 # Then we must move it to our ~/.kaggle folder
@@ -19,15 +31,20 @@ kaggle competitions download -c understanding_cloud_organization -p $KCVUC_RAW_D
 echo "Downloaded the data from the Kaggle system"
 
 # unzip the file we downloaded
-unzip $KCVUC_RAW_DATA/understanding_cloud_organization.zip -d $KCVUC_RAW_DATA/
+unzip $KCVUC_RAW_DATA/$KCVUC_RAW_ZIP_FILE -d $KCVUC_RAW_DATA/
 
 echo "Unziped the file we downloaded"
 
-# We want this data to remain immutable so we run
-# #(chmod a+rwx,u-x,g-wx,o-wx) sets permissions so that, 
-# # (U)ser / owner can read, can write and can't execute. 
-# # (G)roup can read, can't write and can't execute.
-# # (O)thers can read, can't write and can't execute.
-chmod 644 $KCVUC_RAW_DATA/*
+# Delete the heavy zip file once unzipped
+rm $KCVUC_RAW_DATA/$KCVUC_RAW_ZIP_FILE
 
-echo "Limited permissions to the raw data"
+echo "Deleted the original ZIP file"
+
+# # We want this data to remain immutable so we run
+# # #(chmod a+rwx,u-x,g-wx,o-wx) sets permissions so that, 
+# # # (U)ser / owner can read, can write and can't execute. 
+# # # (G)roup can read, can't write and can't execute.
+# # # (O)thers can read, can't write and can't execute.
+# chmod 644 $KCVUC_RAW_DATA/*
+#
+# echo "Limited permissions to the raw data"
