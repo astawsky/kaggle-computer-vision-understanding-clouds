@@ -7,9 +7,12 @@ os.environ["SM_FRAMEWORK"] = "tf.keras"
 import segmentation_models as sm
 from dotenv import load_dotenv
 from os import getenv
+from os.path import join
 import hydra
 from omegaconf import DictConfig
 from pandas import read_csv, DataFrame
+import seaborn as sns
+import matplotlib.pyplot as plt
 
 
 load_dotenv()
@@ -21,60 +24,91 @@ config_name_env = getenv('CONFIG_NAME')
 train_images_path = getenv('KCVUC_TRAIN_IMAGES_PATH')
 
 def separate_images_and_labels(config: DictConfig):
-    # Define all the data processing parameters
-
     # Read the training table
     df_train = read_csv(train_csv_path, dtype=dict(config.train_csv_dtype_map))
 
     # Since the column Image_label encodes the filename and label separated by a single underscore
     df_train['image'] = df_train.Image_Label.map(lambda v: v[:v.index('_')]).astype(config.train_csv_dtype_map.Image)
     df_train['label'] = df_train.Image_Label.map(lambda v: v[v.index('_')+1:]).astype(config.train_csv_dtype_map.Label)
-    # df_train['label_index'] = df_train.Label.map(config.label_mapping)#.astype(config.train_csv_dtype_map.Label_index)
 
     return df_train  #.convert_dtypes()  # Infers all dtypes and converts them
 
 
 def rle2mask(mask_rle: str, shape: tuple, label: int = 1):
-    """
-    mask_rle: run-length as string formatted (start length)
-    shape: (height,width) of array to return
-    Returns numpy array, 1 - mask, 0 - background
 
-    """
-    s = mask_rle.split()
-    starts, lengths = [np.asarray(x, dtype=int) for x in (s[0:][::2], s[1:][::2])]
-    starts -= 1
-    ends = starts + lengths
-    img = np.zeros(shape[0] * shape[1], dtype=np.uint8)
-    for lo, hi in zip(starts, ends):
-        img[lo:hi] = label
-    return img.reshape(shape)  # Needed to align to RLE direction
+    # Blank array-mask to fill in
+    return_mask = np.zeros(shape[0]*shape[1])
 
+    # If it is Nan then we return the blank mask
+    if isinstance(mask_rle, float):
+        if np.isnan(mask_rle):
+            print(f'Should be Nan: {mask_rle}')
+            return return_mask.reshape((shape[1], shape[0])).T
 
-def check_image_and_mask(image, mask):
-    print(image.shape)
-    print(mask.shape)
+    # Parse the string RLE
+    mask_rle = np.fromstring(mask_rle, dtype=int, sep=' ')
 
-    # import matplotlib.pyplot as plt
-    # plt.
+    # Must be even number of numbers in total
+    assert len(mask_rle) % 2 == 0
+
+    # Define the target pixels
+    start_positions = np.array(mask_rle)[0::2] - 1
+    run_lengths = np.array(mask_rle)[1::2]
+
+    # Input the target pixels to the mask
+    for sp, rl in zip(start_positions, run_lengths):
+        return_mask[sp:(sp+rl)] = 1
+
+    # reshape the length-wise mask
+    return return_mask.reshape((shape[1], shape[0])).T
 
 
 @hydra.main(config_path=config_path_env, config_name=config_name_env, version_base=None)
 def run(config: DictConfig):
-    dp_config = config.data_processing
-    raw_image_shape = (dp_config.raw_image_height, dp_config.raw_image_width)
-    df_train = separate_images_and_labels(config=dp_config)
-    decoded_mask = rle2mask(mask_rle=df_train.loc[0, 'EncodedPixels'], shape=raw_image_shape, label=1) # todo: put 1400 and 2100 as env variables of pixel height and width of raw images
-    # df_train.EncodedPixels.map()
+    return None
 
-    vis2 = cv2.cvtColor(decoded_mask, cv2.COLOR_GRAY2BGR)
-    cv2.imshow('mask', vis2)
-    cv2.waitKey()
-    print('end of run')
+
+@hydra.main(config_path=config_path_env, config_name=config_name_env, version_base=None)
+def plot_train_images_with_mask(config: DictConfig, filename_list: list = []):
+
+    # The relevant config file
+    pp_config = config.preprocessing
+
+    # shape raw images come in
+    raw_image_shape = (pp_config.raw_image_height, pp_config.raw_image_width)
+
+    # Label parsing
+    df_train = separate_images_and_labels(config=pp_config)
+    
+    # Show either specified training files or all
+    files_to_show = filename_list if len(filename_list) > 0 else range(len(df_train))
+
+    for i in files_to_show:
+        encoded_mask = df_train.loc[i, 'EncodedPixels']
+        image_filename = df_train.loc[i, 'image']
+        label = df_train.loc[i, 'label']
+
+        # img = cv2.imread(f'data/raw/train_images/{image_filename}')
+        img = cv2.imread(join(train_images_path, image_filename))
+
+        decoded_mask = rle2mask(mask_rle=encoded_mask, shape=raw_image_shape, label=1) * 255 # todo: put 1400 and 2100 as env variables of pixel height and width of raw images
+
+        # img = mpimg.imread(f'data/raw/train_images/{image_filename}')
+        # img = mpimg.imread(f'data/raw/train_images/{image_filename}')
+        fig, ax = plt.subplots(1, 1, dpi=150)
+        ax.imshow(img)
+        ax.imshow(decoded_mask, cmap='gray', alpha=0.5)
+        plt.title(f'{label} label in \'{image_filename}\'')
+        plt.xticks([])
+        plt.yticks([])
+        plt.tight_layout()
+        plt.show()
+        plt.close()
 
 
 if __name__ == '__main__':
-    run()
+    plot_train_images_with_mask()
+    # run()
 
 
 

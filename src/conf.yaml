@@ -1,4 +1,4 @@
-data_processing:
+preprocessing:
   random_state: 42
   batch_size: 64
   raw_image_height: 1400

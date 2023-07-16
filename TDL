@@ -1,18 +1,23 @@
 To do list:
 
-- Download segmentation models, open cv, and alubmentations libraries
-- Create function that converts masks into Greyscale images
-- Train-test split
+- Download segmentation models, open cv, and alubmentations libraries  ~~ DONE
+- Create function that converts masks into Greyscale images ~~DONE
+- Create Train-test split function
 - 
 - Data augmentation (optional but highly recommended)
-- create a pipeline that 
+- create a pipeline that goes through all the preprocessing
+- Find or create Dice Coefficient metric
 
 
 Development flow:
 
 - run import_data.sh to download raw kaggle dataset
 - start preprocessing
-    - Read CSV and change dtypes of columns
+    - Read CSV and parse labels and images
     - Generate Greyscale masks of labels with the same size as the original image
+    - 
 
+- start prediction
+    - 
+    - scale encodings by 0.25
 
