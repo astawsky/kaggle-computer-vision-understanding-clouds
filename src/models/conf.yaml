@@ -1,0 +1,14 @@
+backbone: 
+  - 'resnet34'
+encoder_weights: 'imagenet'
+model_compile_name: 'Adam'
+raw_image_height: 1400
+raw_image_width: 2100
+output_image_height:
+output_image_width:
+training_random_state: 74
+
+
+
+
+

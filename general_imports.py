@@ -8,7 +8,7 @@ from os.path import join
 
 # Load the environmental variables
 from dotenv import load_dotenv
-from os import getenv
+from os import getenv, environ
 
 load_dotenv()
 

@@ -16,6 +16,10 @@ preprocessing:
     Sugar: 3
   skf_n_splits: 15
   skf_shuffle: False
+training:
+  backbone: ['resnet34']
+  encoder_weights: 'imagenet'
+  model_compile_name: 'Adam'
 
 
 
